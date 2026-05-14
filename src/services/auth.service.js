@@ -2,7 +2,9 @@ import bcrypt from "bcrypt";
 import {
   createUserWithOrganization,
   findUserByEmail,
+  findUserWithOrgByEmail,
 } from "@/repositories/auth.repository";
+import { generateToken } from "@/lib/jwt";
 
 export const signupService = async ({ email, password, organizationName }) => {
   // check user exists
@@ -24,5 +26,34 @@ export const signupService = async ({ email, password, organizationName }) => {
   return {
     message: "User created successfully",
     user: org.users[0],
+  };
+};
+
+export const loginService = async ({ email, password }) => {
+  const user = await findUserWithOrgByEmail(email);
+
+  if (!user) {
+    throw new Error("Invalid email or password");
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    throw new Error("Invalid email or password");
+  }
+
+  const token = generateToken({
+    userId: user.id,
+    organizationId: user.organizationId,
+  });
+
+  return {
+    message: "Login successful",
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      organizationId: user.organizationId,
+    },
   };
 };

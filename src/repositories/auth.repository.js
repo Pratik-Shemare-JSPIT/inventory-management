@@ -26,3 +26,12 @@ export const findUserByEmail = async (email) => {
     where: { email },
   });
 };
+
+export const findUserWithOrgByEmail = async (email) => {
+  return prisma.user.findUnique({
+    where: { email },
+    include: {
+      organization: true,
+    },
+  });
+};
