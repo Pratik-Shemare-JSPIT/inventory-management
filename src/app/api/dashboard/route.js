@@ -10,6 +10,8 @@ export async function GET(req) {
 
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    console.error(error); // 👈 ADD THIS
+
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

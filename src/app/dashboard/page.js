@@ -27,12 +27,14 @@ export default function Dashboard() {
   };
 
   const fetchDashboard = async () => {
+    const token = localStorage.getItem("token");
+
     const res = await fetch("/api/dashboard", {
       headers: { Authorization: `Bearer ${token}` },
     });
 
     if (res.status === 401) {
-      handleLogout();
+      router.push("/login");
       return;
     }
 
@@ -81,8 +83,17 @@ export default function Dashboard() {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        ...form,
+        name: form.name,
+        sku: form.sku,
         quantity: Number(form.quantity),
+
+        costPrice: form.costPrice ? Number(form.costPrice) : null,
+
+        sellingPrice: form.sellingPrice ? Number(form.sellingPrice) : null,
+
+        lowStockThreshold: form.lowStockThreshold
+          ? Number(form.lowStockThreshold)
+          : null,
       }),
     });
     setLoading(false);
@@ -210,7 +221,8 @@ export default function Dashboard() {
 
               <tbody>
                 {products.map((p) => {
-                  const threshold = p.lowStockThreshold ?? 5;
+                  const threshold =
+                    p.lowStockThreshold ?? dashboard?.defaultThreshold ?? 5;
                   const isLow = p.quantity <= threshold;
 
                   return (

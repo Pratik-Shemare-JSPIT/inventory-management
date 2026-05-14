@@ -6,6 +6,7 @@ import {
   getProductsByOrganization,
   updateProduct,
 } from "@/repositories/product.repository";
+import { getSettings } from "@/repositories/settings.repository";
 
 export const createProductService = async (data, user) => {
   return createProduct({
@@ -41,6 +42,10 @@ export const deleteProductService = async (id, user) => {
 export const getDashboardService = async (user) => {
   const products = await getDashboardStats(user.organizationId);
 
+  const settings = await getSettings(user.organizationId);
+
+  const defaultThreshold = settings?.defaultLowStockThreshold ?? 5;
+
   let totalProducts = products.length;
   let totalQuantity = 0;
 
@@ -49,7 +54,7 @@ export const getDashboardService = async (user) => {
   for (let product of products) {
     totalQuantity += product.quantity;
 
-    const threshold = product.lowStockThreshold ?? 5;
+    const threshold = product.lowStockThreshold ?? defaultThreshold;
 
     if (product.quantity <= threshold) {
       lowStockItems.push({
@@ -66,5 +71,6 @@ export const getDashboardService = async (user) => {
     totalProducts,
     totalQuantity,
     lowStockItems,
+    defaultThreshold,
   };
 };
