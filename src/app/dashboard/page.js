@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
+  const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const router = useRouter();
 
   const [dashboard, setDashboard] = useState(null);
@@ -63,6 +65,7 @@ export default function Dashboard() {
   }, []);
 
   const handleSubmit = async (e) => {
+    setLoading(true);
     e.preventDefault();
 
     const url = editingProduct
@@ -82,7 +85,7 @@ export default function Dashboard() {
         quantity: Number(form.quantity),
       }),
     });
-
+    setLoading(false);
     setForm({ name: "", sku: "", quantity: "" });
     setEditingProduct(null);
 
@@ -99,12 +102,21 @@ export default function Dashboard() {
           Inventory Dashboard
         </h1>
 
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
-        >
-          Logout
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.push("/settings")}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition"
+          >
+            Settings
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -172,7 +184,7 @@ export default function Dashboard() {
           />
 
           <button className="bg-blue-600 hover:bg-blue-700 transition text-white rounded-lg px-4 py-2 font-medium">
-            {editingProduct ? "Update" : "Add"}
+            {loading ? "Processing..." : editingProduct ? "Update" : "Add"}
           </button>
         </form>
       </div>

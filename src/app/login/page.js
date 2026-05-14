@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function Login() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function Login() {
       localStorage.setItem("token", data.token);
       router.push("/dashboard");
     } else {
-      alert(data.error);
+      toast.error("Something went wrong");
     }
   };
 

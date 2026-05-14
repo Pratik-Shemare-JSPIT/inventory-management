@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function Signup() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function Signup() {
     if (res.ok) {
       router.push("/login");
     } else {
-      alert(data.error);
+      toast.error(data.error || "Something went wrong");
     }
   };
 
