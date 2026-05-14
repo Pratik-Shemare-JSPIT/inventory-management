@@ -1,6 +1,7 @@
 import {
   createProduct,
   deleteProduct,
+  getDashboardStats,
   getProductById,
   getProductsByOrganization,
   updateProduct,
@@ -35,4 +36,35 @@ export const deleteProductService = async (id, user) => {
   }
 
   return deleteProduct(id);
+};
+
+export const getDashboardService = async (user) => {
+  const products = await getDashboardStats(user.organizationId);
+
+  let totalProducts = products.length;
+  let totalQuantity = 0;
+
+  const lowStockItems = [];
+
+  for (let product of products) {
+    totalQuantity += product.quantity;
+
+    const threshold = product.lowStockThreshold ?? 5;
+
+    if (product.quantity <= threshold) {
+      lowStockItems.push({
+        id: product.id,
+        name: product.name,
+        sku: product.sku,
+        quantity: product.quantity,
+        lowStockThreshold: threshold,
+      });
+    }
+  }
+
+  return {
+    totalProducts,
+    totalQuantity,
+    lowStockItems,
+  };
 };
