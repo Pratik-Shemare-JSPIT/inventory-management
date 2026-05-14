@@ -8,6 +8,7 @@ export default function Dashboard() {
 
   const [dashboard, setDashboard] = useState(null);
   const [products, setProducts] = useState([]);
+  const [editingProduct, setEditingProduct] = useState(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -61,11 +62,17 @@ export default function Dashboard() {
     fetchProducts();
   }, []);
 
-  const handleAddProduct = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    await fetch("/api/products", {
-      method: "POST",
+    const url = editingProduct
+      ? `/api/products/${editingProduct.id}`
+      : "/api/products";
+
+    const method = editingProduct ? "PUT" : "POST";
+
+    await fetch(url, {
+      method,
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -77,6 +84,7 @@ export default function Dashboard() {
     });
 
     setForm({ name: "", sku: "", quantity: "" });
+    setEditingProduct(null);
 
     fetchProducts();
     fetchDashboard();
@@ -139,7 +147,7 @@ export default function Dashboard() {
         <h2 className="font-semibold mb-4">Add Product</h2>
 
         <form
-          onSubmit={handleAddProduct}
+          onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-4 gap-3"
         >
           <input
@@ -164,7 +172,7 @@ export default function Dashboard() {
           />
 
           <button className="bg-blue-600 hover:bg-blue-700 transition text-white rounded-lg px-4 py-2 font-medium">
-            Add
+            {editingProduct ? "Update" : "Add"}
           </button>
         </form>
       </div>
@@ -175,20 +183,91 @@ export default function Dashboard() {
         {products.length === 0 ? (
           <p className="text-gray-500">No products added</p>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {products.map((p) => (
-              <div
-                key={p.id}
-                className="flex justify-between items-center py-3"
-              >
-                <div>
-                  <p className="font-medium">{p.name}</p>
-                  <p className="text-gray-500 text-sm">{p.sku}</p>
-                </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b">
+                  <th className="py-2">Name</th>
+                  <th>SKU</th>
+                  <th>Qty</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
 
-                <p className="font-semibold text-gray-700">Qty: {p.quantity}</p>
-              </div>
-            ))}
+              <tbody>
+                {products.map((p) => {
+                  const threshold = p.lowStockThreshold ?? 5;
+                  const isLow = p.quantity <= threshold;
+
+                  return (
+                    <tr key={p.id} className="border-b">
+                      <td className="py-3 font-medium">{p.name}</td>
+                      <td className="text-gray-500">{p.sku}</td>
+                      <td>{p.quantity}</td>
+                      <td>₹{p.sellingPrice || 0}</td>
+
+                      <td>
+                        {isLow ? (
+                          <span className="text-red-500 font-medium">Low</span>
+                        ) : (
+                          <span className="text-green-600 font-medium">OK</span>
+                        )}
+                      </td>
+
+                      <td>
+                        <button
+                          onClick={() => {
+                            setEditingProduct(p);
+                            setForm({
+                              name: p.name,
+                              sku: p.sku,
+                              quantity: p.quantity,
+                              costPrice: p.costPrice || "",
+                              sellingPrice: p.sellingPrice || "",
+                              lowStockThreshold: p.lowStockThreshold || "",
+                            });
+                          }}
+                          className="text-blue-600 hover:underline text-sm mr-3"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!confirm("Delete this product?")) return;
+
+                            await fetch(`/api/products/${p.id}`, {
+                              method: "DELETE",
+                              headers: {
+                                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                              },
+                            });
+
+                            location.reload();
+                          }}
+                          className="text-red-500 hover:underline text-sm"
+                        >
+                          Delete
+                        </button>
+                        {editingProduct && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingProduct(null);
+                              setForm({ name: "", sku: "", quantity: "" });
+                            }}
+                            className="text-gray-500 text-sm ml-2"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
